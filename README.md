@@ -289,4 +289,5 @@ npm run dev
 - **Port conflicts:** Backend defaults to port 5000 and frontend to 5173. Configure different ports in `server/.env` and `client/vite.config.js` if necessary.
 #   E C O C L U B  
  #   E C O C L U B  
+ #   E C O C L U B  
  
