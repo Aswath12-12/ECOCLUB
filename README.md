@@ -288,4 +288,5 @@ npm run dev
 - **Default student login not reaching dashboard:** This is an intentional security feature. New students with `mustChangePassword = true` are redirected to `/student/change-password` until they create a new password.
 - **Port conflicts:** Backend defaults to port 5000 and frontend to 5173. Configure different ports in `server/.env` and `client/vite.config.js` if necessary.
 #   E C O C L U B  
+ #   E C O C L U B  
  
