@@ -52,7 +52,11 @@ const normalizeRow = (rawRow) => {
     } else if (cleanKey === 'phone' || cleanKey === 'phonenumber' || cleanKey === 'mobile') {
       normalized.phone = val;
     } else if (cleanKey === 'department' || cleanKey === 'dept') {
-      normalized.department = val.toUpperCase();
+      let deptVal = val.toUpperCase();
+      if (['CYBER', 'CYBERSECURITY', 'CSE(CYBER SECURITY)', 'CSE (CYBER SECURITY)', 'CYBER SEC'].includes(deptVal)) {
+        deptVal = 'CYBER SECURITY';
+      }
+      normalized.department = deptVal;
     } else if (cleanKey === 'year') {
       normalized.year = val.toUpperCase();
     } else if (cleanKey === 'class' || cleanKey === 'classname' || cleanKey === 'section') {

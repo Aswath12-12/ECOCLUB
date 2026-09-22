@@ -144,6 +144,16 @@ const seedData = async () => {
         className: 'A',
         houseId: houseMap.GREEN._id
       },
+      {
+        rollNo: '23CY001',
+        name: 'Vignesh Cyber',
+        email: 'vignesh.cy@ecoclub.org',
+        phone: '9876543214',
+        department: 'CYBER SECURITY',
+        year: 'II',
+        className: 'A',
+        houseId: houseMap.GREEN._id
+      },
 
       // BLUE HOUSE
       {
