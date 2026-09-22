@@ -15,8 +15,15 @@ export const StudentRanking = () => {
       try {
         setLoading(true);
         const res = await houseService.getOverallRanking();
-        if (res.success) {
-          setRankings(res.data.rankings);
+        if (res.success && res.data.rankings) {
+          const studentHouses = res.data.rankings
+            .filter((h) => h.code !== 'OFFICE_BEARERS')
+            .map((h, idx) => ({
+              ...h,
+              rank: idx + 1,
+              rankText: ['1st', '2nd', '3rd', '4th'][idx] || `${idx + 1}th`
+            }));
+          setRankings(studentHouses);
         }
       } catch (err) {
         console.error('Failed to load championship ranking:', err);

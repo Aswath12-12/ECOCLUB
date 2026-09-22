@@ -12,14 +12,30 @@ import {
   LogOut,
   Menu,
   X,
-  Sparkles
+  Lock,
+  Eye,
+  EyeOff,
+  CheckCircle2,
+  AlertCircle,
+  Loader2
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 
 export const AdminLayout = () => {
-  const { user, logout } = useAuth();
+  const { user, logout, changePassword } = useAuth();
   const navigate = useNavigate();
   const [mobileOpen, setMobileOpen] = useState(false);
+
+  // Reset / Change Password Modal State
+  const [passwordModalOpen, setPasswordModalOpen] = useState(false);
+  const [currentPassword, setCurrentPassword] = useState('');
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [showCurrentPassword, setShowCurrentPassword] = useState(false);
+  const [showNewPassword, setShowNewPassword] = useState(false);
+  const [pwdLoading, setPwdLoading] = useState(false);
+  const [pwdError, setPwdError] = useState('');
+  const [pwdSuccess, setPwdSuccess] = useState('');
 
   const navItems = [
     { to: '/admin/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
@@ -35,6 +51,49 @@ export const AdminLayout = () => {
   const handleLogout = () => {
     logout();
     navigate('/login');
+  };
+
+  const handleOpenPasswordModal = () => {
+    setCurrentPassword('');
+    setNewPassword('');
+    setConfirmPassword('');
+    setPwdError('');
+    setPwdSuccess('');
+    setPasswordModalOpen(true);
+    if (mobileOpen) setMobileOpen(false);
+  };
+
+  const handlePasswordSubmit = async (e) => {
+    e.preventDefault();
+    setPwdError('');
+    setPwdSuccess('');
+
+    if (!currentPassword) {
+      setPwdError('Please enter your current password');
+      return;
+    }
+    if (newPassword.length < 6) {
+      setPwdError('New password must be at least 6 characters long');
+      return;
+    }
+    if (newPassword !== confirmPassword) {
+      setPwdError('New passwords do not match');
+      return;
+    }
+
+    try {
+      setPwdLoading(true);
+      await changePassword(currentPassword, newPassword);
+      setPwdSuccess('Admin password updated successfully!');
+      setTimeout(() => {
+        setPasswordModalOpen(false);
+        setPwdSuccess('');
+      }, 1500);
+    } catch (err) {
+      setPwdError(err.response?.data?.message || err.message || 'Failed to update password');
+    } finally {
+      setPwdLoading(false);
+    }
   };
 
   return (
@@ -107,7 +166,14 @@ export const AdminLayout = () => {
               })}
             </nav>
 
-            <div className="pt-4 border-t border-slate-100 mt-4">
+            <div className="pt-4 border-t border-slate-100 mt-4 space-y-1">
+              <button
+                onClick={handleOpenPasswordModal}
+                className="flex items-center gap-3 w-full px-3.5 py-2.5 rounded-xl text-xs font-semibold text-slate-700 hover:bg-slate-100 transition-colors"
+              >
+                <Lock className="w-4 h-4 shrink-0 text-slate-500" />
+                <span>Reset Admin Password</span>
+              </button>
               <button
                 onClick={handleLogout}
                 className="flex items-center gap-3 w-full px-3.5 py-2.5 rounded-xl text-xs font-semibold text-rose-600 hover:bg-rose-50 transition-colors"
@@ -154,9 +220,9 @@ export const AdminLayout = () => {
           })}
         </nav>
 
-        {/* User Card & Logout */}
+        {/* User Card & Actions */}
         <div className="pt-4 border-t border-slate-100">
-          <div className="p-3 bg-slate-50 rounded-2xl mb-3 flex items-center gap-3">
+          <div className="p-3 bg-slate-50 rounded-2xl mb-2 flex items-center gap-3">
             <div className="w-9 h-9 rounded-xl bg-eco-100 text-eco-800 font-bold flex items-center justify-center text-xs">
               AD
             </div>
@@ -165,6 +231,15 @@ export const AdminLayout = () => {
               <p className="text-[11px] text-slate-400 truncate">{user?.email}</p>
             </div>
           </div>
+
+          <button
+            onClick={handleOpenPasswordModal}
+            className="flex items-center gap-2.5 w-full px-3.5 py-2.5 rounded-xl text-xs font-semibold text-slate-700 hover:bg-slate-100 transition-colors cursor-pointer mb-1"
+          >
+            <Lock className="w-4 h-4 shrink-0 text-slate-500" />
+            <span>Reset Password</span>
+          </button>
+
           <button
             onClick={handleLogout}
             className="flex items-center gap-2.5 w-full px-3.5 py-2.5 rounded-xl text-xs font-semibold text-rose-600 hover:bg-rose-50 transition-colors cursor-pointer"
@@ -181,6 +256,125 @@ export const AdminLayout = () => {
           <Outlet />
         </div>
       </main>
+
+      {/* Admin Password Reset Modal */}
+      {passwordModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm animate-in fade-in duration-200">
+          <div className="relative w-full max-w-md bg-white rounded-3xl shadow-2xl border border-slate-100 p-6 sm:p-8">
+            <button
+              onClick={() => setPasswordModalOpen(false)}
+              className="absolute top-5 right-5 p-2 rounded-full text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors"
+            >
+              <X className="w-5 h-5" />
+            </button>
+
+            <div className="flex items-center gap-3 mb-6">
+              <div className="w-11 h-11 rounded-2xl bg-eco-50 border border-eco-100 flex items-center justify-center text-eco-600">
+                <Lock className="w-5 h-5" />
+              </div>
+              <div>
+                <h3 className="text-lg font-bold text-slate-900">Reset Admin Password</h3>
+                <p className="text-xs text-slate-500">Update your administrator account password</p>
+              </div>
+            </div>
+
+            {pwdError && (
+              <div className="mb-4 p-3 bg-rose-50 border border-rose-200 rounded-2xl flex items-center gap-3 text-rose-700 text-xs">
+                <AlertCircle className="w-4 h-4 shrink-0" />
+                <span>{pwdError}</span>
+              </div>
+            )}
+
+            {pwdSuccess && (
+              <div className="mb-4 p-3 bg-emerald-50 border border-emerald-200 rounded-2xl flex items-center gap-3 text-emerald-700 text-xs font-semibold">
+                <CheckCircle2 className="w-4 h-4 shrink-0" />
+                <span>{pwdSuccess}</span>
+              </div>
+            )}
+
+            <form onSubmit={handlePasswordSubmit} className="space-y-4">
+              <div>
+                <label className="block text-xs font-semibold text-slate-700 mb-1.5">Current Password</label>
+                <div className="relative">
+                  <input
+                    type={showCurrentPassword ? 'text' : 'password'}
+                    value={currentPassword}
+                    onChange={(e) => setCurrentPassword(e.target.value)}
+                    placeholder="Enter current password"
+                    required
+                    className="w-full px-4 py-2.5 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-eco-500/20 focus:border-eco-500 pr-10"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowCurrentPassword(!showCurrentPassword)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
+                  >
+                    {showCurrentPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                  </button>
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-slate-700 mb-1.5">New Password</label>
+                <div className="relative">
+                  <input
+                    type={showNewPassword ? 'text' : 'password'}
+                    value={newPassword}
+                    onChange={(e) => setNewPassword(e.target.value)}
+                    placeholder="Enter new password (min 6 characters)"
+                    required
+                    className="w-full px-4 py-2.5 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-eco-500/20 focus:border-eco-500 pr-10"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowNewPassword(!showNewPassword)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
+                  >
+                    {showNewPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                  </button>
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-slate-700 mb-1.5">Confirm New Password</label>
+                <input
+                  type="password"
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  placeholder="Re-enter new password"
+                  required
+                  className="w-full px-4 py-2.5 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-eco-500/20 focus:border-eco-500"
+                />
+              </div>
+
+              <div className="pt-2 flex items-center gap-3">
+                <button
+                  type="button"
+                  onClick={() => setPasswordModalOpen(false)}
+                  className="flex-1 py-2.5 px-4 rounded-xl text-xs font-semibold text-slate-600 border border-slate-200 hover:bg-slate-50 transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={pwdLoading}
+                  className="flex-1 py-2.5 px-4 rounded-xl text-xs font-semibold text-white bg-eco-600 hover:bg-eco-700 transition-colors flex items-center justify-center gap-2 shadow-sm disabled:opacity-50"
+                >
+                  {pwdLoading ? (
+                    <>
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                      Updating...
+                    </>
+                  ) : (
+                    'Update Password'
+                  )}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
+

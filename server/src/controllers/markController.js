@@ -162,7 +162,15 @@ const getMyMarks = async (req, res, next) => {
     const studentId = req.user.id;
     const { weekNumber } = req.query;
 
-    const filter = { studentId };
+    const student = await Student.findById(studentId);
+    if (!student) return sendError(res, 404, 'Student record not found.');
+
+    const filter = {
+      $or: [
+        { studentId },
+        { houseId: student.houseId, studentId: null }
+      ]
+    };
     if (weekNumber) {
       filter.weekNumber = parseInt(weekNumber, 10);
     }
@@ -241,7 +249,12 @@ const getStudentMarks = async (req, res, next) => {
     const student = await Student.findById(requestedStudentId).populate('houseId');
     if (!student) return sendError(res, 404, 'Student not found.');
 
-    const marks = await WeeklyMark.find({ studentId: requestedStudentId })
+    const marks = await WeeklyMark.find({
+      $or: [
+        { studentId: requestedStudentId },
+        { houseId: student.houseId?._id || student.houseId, studentId: null }
+      ]
+    })
       .populate('activityId', 'name description maxMarks date')
       .populate('houseId', 'name code colorCode')
       .sort({ weekNumber: 1 })
@@ -269,9 +282,188 @@ const getStudentMarks = async (req, res, next) => {
   }
 };
 
+/**
+ * Get all houses and their existing marks for a given weekNumber + activityId
+ * Powers House-Level grading
+ */
+const getHouseGradingSheet = async (req, res, next) => {
+  try {
+    const { weekNumber, activityId } = req.query;
+
+    if (!weekNumber || !activityId) {
+      return sendError(res, 400, 'weekNumber and activityId are required query parameters.');
+    }
+
+    const parsedWeek = parseInt(weekNumber, 10);
+
+    const [activity, houses, existingMarks, studentsCountAgg] = await Promise.all([
+      Activity.findById(activityId).lean(),
+      House.find({ active: true }).sort({ code: 1 }).lean(),
+      WeeklyMark.find({
+        activityId,
+        weekNumber: parsedWeek
+      }).lean(),
+      Student.aggregate([
+        { $match: { isActive: true } },
+        { $group: { _id: '$houseId', count: { $sum: 1 } } }
+      ])
+    ]);
+
+    if (!activity) return sendError(res, 404, 'Activity not found.');
+
+    const studentCountMap = new Map();
+    studentsCountAgg.forEach((item) => {
+      if (item._id) studentCountMap.set(item._id.toString(), item.count);
+    });
+
+    const houseMarksMap = new Map();
+    existingMarks.forEach((m) => {
+      const hId = m.houseId ? m.houseId.toString() : null;
+      if (hId) {
+        if (!houseMarksMap.has(hId)) {
+          houseMarksMap.set(hId, []);
+        }
+        houseMarksMap.get(hId).push(m);
+      }
+    });
+
+    const houseGradingSheet = houses.map((house) => {
+      const hId = house._id.toString();
+      const marksList = houseMarksMap.get(hId) || [];
+      const studentCount = studentCountMap.get(hId) || 0;
+
+      let currentMark = '';
+      let currentRemarks = '';
+      let hasRecord = false;
+
+      if (marksList.length > 0) {
+        hasRecord = true;
+        currentMark = marksList[0].marks;
+        currentRemarks = marksList[0].remarks || '';
+      }
+
+      return {
+        houseId: house._id,
+        name: house.name,
+        code: house.code,
+        colorCode: house.colorCode,
+        studentCount,
+        marks: currentMark,
+        remarks: currentRemarks,
+        hasRecord,
+        recordedStudentsCount: marksList.length
+      };
+    });
+
+    return sendSuccess(res, 200, 'House grading sheet retrieved successfully', {
+      activity,
+      weekNumber: parsedWeek,
+      houses: houseGradingSheet
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
+ * Save / Update single team mark for entire houses
+ * Stores ONE mark record per house (studentId: null) without multiplying by member count
+ */
+const saveHouseMarks = async (req, res, next) => {
+  try {
+    const { weekNumber, activityId, weekStartDate, weekEndDate, houseMarks } = req.body;
+
+    if (!weekNumber || !activityId || !houseMarks || !Array.isArray(houseMarks)) {
+      return sendError(res, 400, 'weekNumber, activityId, and houseMarks array are required.');
+    }
+
+    const activity = await Activity.findById(activityId);
+    if (!activity) return sendError(res, 404, 'Activity not found.');
+
+    const parsedWeek = parseInt(weekNumber, 10);
+    const maxMarks = activity.maxMarks;
+    const validationErrors = [];
+    const bulkOperations = [];
+
+    for (const hItem of houseMarks) {
+      if (hItem.marks === '' || hItem.marks === null || typeof hItem.marks === 'undefined') {
+        continue;
+      }
+
+      const numMarks = Number(hItem.marks);
+      if (isNaN(numMarks) || numMarks < 0 || numMarks > maxMarks) {
+        validationErrors.push(
+          `Invalid marks for House (${hItem.marks}). Must be between 0 and ${maxMarks}.`
+        );
+        continue;
+      }
+
+      const houseId = hItem.houseId;
+      const remarks = hItem.remarks ? String(hItem.remarks).trim() : '';
+
+      // Clean up any student-level records previously generated for this house & activity & week
+      await WeeklyMark.deleteMany({
+        houseId,
+        activityId,
+        weekNumber: parsedWeek,
+        studentId: { $ne: null }
+      });
+
+      // Upsert ONE single house mark record for the entire team
+      bulkOperations.push({
+        updateOne: {
+          filter: {
+            houseId,
+            activityId,
+            weekNumber: parsedWeek,
+            studentId: null
+          },
+          update: {
+            $set: {
+              studentId: null,
+              houseId,
+              activityId,
+              weekNumber: parsedWeek,
+              weekStartDate: weekStartDate ? new Date(weekStartDate) : undefined,
+              weekEndDate: weekEndDate ? new Date(weekEndDate) : undefined,
+              marks: numMarks,
+              maxMarks,
+              remarks,
+              awardedBy: req.user.id
+            }
+          },
+          upsert: true
+        }
+      });
+    }
+
+    if (validationErrors.length > 0) {
+      return sendError(res, 400, 'Validation errors in house marks', validationErrors);
+    }
+
+    if (bulkOperations.length === 0) {
+      return sendError(res, 400, 'No house marks were provided to save.');
+    }
+
+    const bulkResult = await WeeklyMark.bulkWrite(bulkOperations);
+
+    return sendSuccess(res, 200, 'House marks saved successfully', {
+      upsertedCount: bulkResult.upsertedCount,
+      modifiedCount: bulkResult.modifiedCount,
+      matchedCount: bulkResult.matchedCount
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
 module.exports = {
   getMarksForGrading,
   saveOrUpdateMarks,
+  getHouseGradingSheet,
+  saveHouseMarks,
   getMyMarks,
   getStudentMarks
 };
+
+

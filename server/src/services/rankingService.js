@@ -28,7 +28,7 @@ const rankHouses = (housesData) => {
     return a.code.localeCompare(b.code);
   });
 
-  const rankSuffixes = ['1st', '2nd', '3rd', '4th'];
+  const rankSuffixes = ['1st', '2nd', '3rd', '4th', '5th'];
   return sorted.map((house, idx) => ({
     ...house,
     rank: idx + 1,
@@ -99,7 +99,7 @@ const getOverallRanking = async () => {
       totalPoints,
       totalMaxPossible,
       entriesCount: stats.entriesCount,
-      uniqueParticipants: stats.participatingStudents.length,
+      uniqueParticipants: stats.participatingStudents.filter(Boolean).length,
       studentCount,
       participationPercentage
     };
@@ -172,7 +172,7 @@ const getWeeklyRanking = async (weekNumber) => {
       totalPoints,
       totalMaxPossible,
       entriesCount: stats.entriesCount,
-      uniqueParticipants: stats.participatingStudents.length,
+      uniqueParticipants: stats.participatingStudents.filter(Boolean).length,
       studentCount,
       participationPercentage
     };

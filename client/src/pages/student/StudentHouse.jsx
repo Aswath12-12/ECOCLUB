@@ -17,10 +17,17 @@ export const StudentHouse = () => {
       try {
         setLoading(true);
         const res = await houseService.getHouses();
-        if (res.success) {
-          setAllHouses(res.data.houses);
+        if (res.success && res.data.houses) {
+          const studentHouses = res.data.houses
+            .filter((h) => h.code !== 'OFFICE_BEARERS')
+            .map((h, idx) => ({
+              ...h,
+              rank: idx + 1,
+              rankText: ['1st', '2nd', '3rd', '4th'][idx] || `${idx + 1}th`
+            }));
+          setAllHouses(studentHouses);
           const myHouseId = user?.house?._id || user?.house;
-          const match = res.data.houses.find(
+          const match = studentHouses.find(
             (h) => h._id.toString() === (myHouseId?.toString() || '')
           );
           setHouseInfo(match);

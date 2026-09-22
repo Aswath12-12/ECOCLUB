@@ -55,6 +55,9 @@ export const AdminStudents = () => {
   const [editingStudent, setEditingStudent] = useState(null);
   const [importModalOpen, setImportModalOpen] = useState(false);
   const [confirmToggleModal, setConfirmToggleModal] = useState({ open: false, student: null });
+  const [confirmDeleteModal, setConfirmDeleteModal] = useState({ open: false, student: null });
+  const [confirmBulkDeleteModal, setConfirmBulkDeleteModal] = useState(false);
+  const [isBulkDeleting, setIsBulkDeleting] = useState(false);
 
   // Single Student Form State
   const [form, setForm] = useState({
@@ -210,6 +213,40 @@ export const AdminStudents = () => {
     }
   };
 
+  // Single Student Delete Handler
+  const handleDeleteConfirm = async () => {
+    if (!confirmDeleteModal.student) return;
+    try {
+      const res = await studentService.deleteStudent(confirmDeleteModal.student._id);
+      if (res.success) {
+        setAlert({ type: 'success', message: res.message });
+        setConfirmDeleteModal({ open: false, student: null });
+        fetchStudents(pagination.page);
+      }
+    } catch (err) {
+      setAlert({ type: 'error', message: err.message });
+    }
+  };
+
+  // Bulk Delete Handler
+  const handleBulkDeleteConfirm = async () => {
+    if (selectedIds.length === 0) return;
+    setIsBulkDeleting(true);
+    try {
+      const res = await studentService.bulkDeleteStudents(selectedIds);
+      if (res.success) {
+        setAlert({ type: 'success', message: res.message });
+        setConfirmBulkDeleteModal(false);
+        setSelectedIds([]);
+        fetchStudents(pagination.page);
+      }
+    } catch (err) {
+      setAlert({ type: 'error', message: err.message });
+    } finally {
+      setIsBulkDeleting(false);
+    }
+  };
+
   // Bulk selection handlers
   const handleSelectAll = () => {
     if (selectedIds.length === students.length) {
@@ -359,19 +396,28 @@ export const AdminStudents = () => {
 
       {/* Bulk Action Bar (when students selected) */}
       {selectedIds.length > 0 && (
-        <div className="bg-eco-50 border border-eco-200 p-3.5 rounded-2xl flex items-center justify-between shadow-xs">
+        <div className="bg-eco-50 border border-eco-200 p-3.5 rounded-2xl flex flex-wrap items-center justify-between gap-3 shadow-xs">
           <div className="flex items-center gap-2">
             <CheckCircle2 className="w-4 h-4 text-eco-700" />
             <span className="text-xs font-bold text-eco-900">
               {selectedIds.length} student{selectedIds.length > 1 ? 's' : ''} selected
             </span>
           </div>
-          <button
-            onClick={() => setBulkHouseModal(true)}
-            className="px-3.5 py-1.5 bg-eco-600 hover:bg-eco-700 text-white rounded-xl text-xs font-bold transition-colors cursor-pointer shadow-xs"
-          >
-            Assign House
-          </button>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => setBulkHouseModal(true)}
+              className="px-3.5 py-1.5 bg-eco-600 hover:bg-eco-700 text-white rounded-xl text-xs font-bold transition-colors cursor-pointer shadow-xs"
+            >
+              Assign House
+            </button>
+            <button
+              onClick={() => setConfirmBulkDeleteModal(true)}
+              className="inline-flex items-center gap-1.5 px-3.5 py-1.5 bg-rose-600 hover:bg-rose-700 text-white rounded-xl text-xs font-bold transition-colors cursor-pointer shadow-xs"
+            >
+              <Trash2 className="w-3.5 h-3.5" />
+              <span>Delete Selected</span>
+            </button>
+          </div>
         </div>
       )}
 
@@ -472,10 +518,17 @@ export const AdminStudents = () => {
                             </button>
                             <button
                               onClick={() => setConfirmToggleModal({ open: true, student })}
-                              className="p-2 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-xl transition-colors cursor-pointer"
+                              className="p-2 text-slate-400 hover:text-amber-600 hover:bg-amber-50 rounded-xl transition-colors cursor-pointer"
                               title={student.isActive ? 'Deactivate' : 'Activate'}
                             >
                               <ShieldAlert className="w-3.5 h-3.5" />
+                            </button>
+                            <button
+                              onClick={() => setConfirmDeleteModal({ open: true, student })}
+                              className="p-2 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-xl transition-colors cursor-pointer"
+                              title="Delete Student"
+                            >
+                              <Trash2 className="w-3.5 h-3.5" />
                             </button>
                           </div>
                         </td>
@@ -544,11 +597,18 @@ export const AdminStudents = () => {
                         onClick={() => setConfirmToggleModal({ open: true, student })}
                         className={`px-3 py-1.5 text-xs font-bold rounded-xl transition-colors cursor-pointer ${
                           student.isActive
-                            ? 'text-rose-700 bg-rose-50 hover:bg-rose-100'
+                            ? 'text-amber-700 bg-amber-50 hover:bg-amber-100'
                             : 'text-emerald-700 bg-emerald-50 hover:bg-emerald-100'
                         }`}
                       >
                         {student.isActive ? 'Deactivate' : 'Activate'}
+                      </button>
+                      <button
+                        onClick={() => setConfirmDeleteModal({ open: true, student })}
+                        className="p-1.5 text-rose-600 hover:bg-rose-50 rounded-xl transition-colors cursor-pointer"
+                        title="Delete Student"
+                      >
+                        <Trash2 className="w-4 h-4" />
                       </button>
                     </div>
                   </div>
@@ -820,7 +880,30 @@ export const AdminStudents = () => {
           confirmToggleModal.student?.isActive ? 'deactivate' : 'activate'
         } ${confirmToggleModal.student?.name} (${confirmToggleModal.student?.rollNo})?`}
         confirmText={confirmToggleModal.student?.isActive ? 'Deactivate' : 'Activate'}
-        isDestructive={confirmToggleModal.student?.isActive}
+        isDestructive={false}
+      />
+
+      {/* Confirmation Modal for Single Student Permanent Delete */}
+      <ConfirmationModal
+        isOpen={confirmDeleteModal.open}
+        onClose={() => setConfirmDeleteModal({ open: false, student: null })}
+        onConfirm={handleDeleteConfirm}
+        title="Delete Student"
+        message={`Are you sure you want to permanently delete ${confirmDeleteModal.student?.name} (${confirmDeleteModal.student?.rollNo})? All associated weekly marks and password requests will also be removed. This action cannot be undone.`}
+        confirmText="Delete Student"
+        isDestructive={true}
+      />
+
+      {/* Confirmation Modal for Bulk Student Delete */}
+      <ConfirmationModal
+        isOpen={confirmBulkDeleteModal}
+        onClose={() => setConfirmBulkDeleteModal(false)}
+        onConfirm={handleBulkDeleteConfirm}
+        title="Delete Selected Students"
+        message={`Are you sure you want to permanently delete ${selectedIds.length} selected student(s)? All associated weekly marks and password requests will also be removed. This action cannot be undone.`}
+        confirmText="Delete Selected"
+        isDestructive={true}
+        isLoading={isBulkDeleting}
       />
 
       {/* CSV & Excel Bulk Import Modal */}

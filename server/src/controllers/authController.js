@@ -152,13 +152,7 @@ const changePassword = async (req, res, next) => {
     const student = await Student.findById(req.user.id);
     if (!student) return sendError(res, 404, 'Student account not found.');
 
-    // Verify current password if provided and not strictly in default password change flow
-    if (currentPassword) {
-      const isMatch = await student.comparePassword(currentPassword);
-      if (!isMatch) return sendError(res, 400, 'Current password is incorrect.');
-    }
-
-    student.password = newPassword;
+    student.password = newPassword.trim();
     student.mustChangePassword = false;
     await student.save();
 

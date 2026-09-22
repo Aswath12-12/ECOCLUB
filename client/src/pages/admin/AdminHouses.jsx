@@ -75,7 +75,7 @@ export const AdminHouses = () => {
     }
   };
 
-  if (loading) return <LoadingSpinner message="Loading the 4 EcoClub Houses..." />;
+  if (loading) return <LoadingSpinner message="Loading EcoClub Houses & Office Bearers..." />;
 
   return (
     <div className="space-y-6">
@@ -86,19 +86,19 @@ export const AdminHouses = () => {
             House Management
           </h1>
           <p className="text-xs sm:text-sm text-slate-500 font-medium">
-            Manage the four core EcoClub houses. Rename houses dynamically to update rankings and dashboards.
+            Manage the EcoClub houses and Office Bearers team. Rename houses dynamically to update rankings and dashboards.
           </p>
         </div>
 
-        <div className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-eco-50 border border-eco-200 text-eco-800 rounded-xl text-xs font-bold self-start sm:self-auto">
-          <Sparkles className="w-3.5 h-3.5 text-eco-600" />
-          <span>4-House Architecture Fixed</span>
+        <div className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-purple-50 border border-purple-200 text-purple-800 rounded-xl text-xs font-bold self-start sm:self-auto">
+          <Sparkles className="w-3.5 h-3.5 text-purple-600" />
+          <span>5-House & Office Bearers Architecture</span>
         </div>
       </div>
 
       {alert && <Alert type={alert.type} message={alert.message} onClose={() => setAlert(null)} />}
 
-      {/* 4 House Cards Grid */}
+      {/* House Cards Grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
         {houses.map((house) => {
           const theme = getHouseTheme(house.code);

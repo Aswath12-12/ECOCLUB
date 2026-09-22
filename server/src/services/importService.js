@@ -138,7 +138,7 @@ const validateRowsForPreview = async (rawRows) => {
       const searchKey = norm.house.toUpperCase();
       matchedHouse = houseMap.get(searchKey);
       if (!matchedHouse) {
-        errors.push(`Invalid house '${norm.house}'. Available: Green, Blue, Red, Yellow`);
+        errors.push(`Invalid house '${norm.house}'. Available: Green, Blue, Red, Yellow, Office Bearers`);
       }
     }
 

@@ -1,6 +1,6 @@
 export const DEFAULT_STUDENT_PASSWORD = 'eocsxcce';
 
-export const DEPARTMENTS = ['IT', 'CSE', 'ECE', 'MECH', 'CIVIL', 'EEE', 'AI&DS', 'BIOTECH'];
+export const DEPARTMENTS = ['IT', 'CSE', 'ECE', 'MECH', 'CIVIL', 'EEE', 'AI&DS', 'BIOTECH', 'CYBER SECURITY'];
 export const YEARS = ['I', 'II', 'III', 'IV'];
 export const CLASSES = ['A', 'B', 'C'];
 
@@ -48,6 +48,17 @@ export const HOUSE_THEMES = {
     barFill: '#F59E0B',
     gradient: 'from-amber-500 to-yellow-600',
     iconColor: 'text-amber-600'
+  },
+  OFFICE_BEARERS: {
+    code: 'OFFICE_BEARERS',
+    name: 'Office Bearers',
+    bgLight: 'bg-purple-50',
+    border: 'border-purple-200',
+    text: 'text-purple-800',
+    badge: 'bg-purple-100 text-purple-800 border-purple-300',
+    barFill: '#8B5CF6',
+    gradient: 'from-purple-500 to-indigo-600',
+    iconColor: 'text-purple-600'
   }
 };
 
@@ -66,7 +77,11 @@ export const getRankBadge = (rank) => {
       return { emoji: '🥈', label: '2nd', bg: 'bg-slate-200 text-slate-800 border-slate-300' };
     case 3:
       return { emoji: '🥉', label: '3rd', bg: 'bg-orange-100 text-orange-900 border-orange-300' };
+    case 4:
+      return { emoji: '🏅', label: '4th', bg: 'bg-emerald-50 text-emerald-800 border-emerald-200' };
+    case 5:
+      return { emoji: '👑', label: '5th', bg: 'bg-purple-100 text-purple-900 border-purple-300' };
     default:
-      return { emoji: '🏅', label: `${rank || 4}th`, bg: 'bg-emerald-50 text-emerald-800 border-emerald-200' };
+      return { emoji: '🏅', label: `${rank || 5}th`, bg: 'bg-purple-50 text-purple-800 border-purple-200' };
   }
 };

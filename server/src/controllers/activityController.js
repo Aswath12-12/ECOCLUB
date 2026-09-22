@@ -1,4 +1,5 @@
 const Activity = require('../models/Activity');
+const WeeklyMark = require('../models/WeeklyMark');
 const { sendSuccess, sendError } = require('../utils/responseHandler');
 
 /**
@@ -80,7 +81,7 @@ const updateActivity = async (req, res, next) => {
 };
 
 /**
- * Delete activity (or deactivate if marks exist)
+ * Delete activity (and remove associated weekly marks)
  */
 const deleteActivity = async (req, res, next) => {
   try {
@@ -89,7 +90,11 @@ const deleteActivity = async (req, res, next) => {
       return sendError(res, 404, 'Activity not found.');
     }
 
-    await Activity.findByIdAndDelete(req.params.id);
+    await Promise.all([
+      Activity.findByIdAndDelete(req.params.id),
+      WeeklyMark.deleteMany({ activityId: req.params.id })
+    ]);
+
     return sendSuccess(res, 200, 'Activity deleted successfully');
   } catch (error) {
     next(error);

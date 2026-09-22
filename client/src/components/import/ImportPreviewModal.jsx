@@ -3,7 +3,7 @@ import { Upload, FileSpreadsheet, Download, CheckCircle2, AlertCircle, Loader2 }
 import { Modal } from '../common/Modal';
 import { Alert } from '../common/Alert';
 import { studentService } from '../../services/services';
-import { downloadCSVTemplate } from '../../utils/templateGenerators';
+import { downloadCSVTemplate, downloadExcelTemplate } from '../../utils/templateGenerators';
 
 export const ImportPreviewModal = ({ isOpen, onClose, onSuccess }) => {
   const [file, setFile] = useState(null);
@@ -124,17 +124,27 @@ export const ImportPreviewModal = ({ isOpen, onClose, onSuccess }) => {
           <div className="space-y-4">
             <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between p-4 bg-eco-50/70 border border-eco-200/80 rounded-2xl gap-3">
               <div>
-                <p className="text-sm font-semibold text-eco-900">Need the formatted column template?</p>
+                <p className="text-sm font-semibold text-eco-900">Need formatted sample demo templates?</p>
                 <p className="text-xs text-eco-700">Columns: RollNo, Name, Email, Phone, Department, Year, Class, House</p>
               </div>
-              <button
-                type="button"
-                onClick={downloadCSVTemplate}
-                className="inline-flex items-center justify-center gap-2 px-3.5 py-2 bg-white border border-eco-300 text-eco-800 rounded-xl text-xs font-semibold hover:bg-eco-100/50 transition-colors shadow-xs shrink-0 cursor-pointer"
-              >
-                <Download className="w-4 h-4" />
-                <span>Download Template (.csv)</span>
-              </button>
+              <div className="flex items-center gap-2 shrink-0">
+                <a
+                  href="/ecoclub_students_template.csv"
+                  download="ecoclub_students_template.csv"
+                  className="inline-flex items-center justify-center gap-1.5 px-3.5 py-2 bg-white border border-eco-300 text-eco-800 rounded-xl text-xs font-semibold hover:bg-eco-100/50 transition-colors shadow-xs cursor-pointer"
+                >
+                  <Download className="w-3.5 h-3.5 text-eco-600" />
+                  <span>CSV Demo (.csv)</span>
+                </a>
+                <a
+                  href="/ecoclub_students_template.xlsx"
+                  download="ecoclub_students_template.xlsx"
+                  className="inline-flex items-center justify-center gap-1.5 px-3.5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-semibold transition-colors shadow-xs cursor-pointer"
+                >
+                  <FileSpreadsheet className="w-3.5 h-3.5 text-white" />
+                  <span>Excel Demo (.xlsx)</span>
+                </a>
+              </div>
             </div>
 
             <div className="border-2 border-dashed border-slate-200 hover:border-eco-400 rounded-2xl p-6 sm:p-8 text-center transition-colors bg-slate-50/50">

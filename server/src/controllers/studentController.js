@@ -1,6 +1,8 @@
 const bcrypt = require('bcryptjs');
 const Student = require('../models/Student');
 const House = require('../models/House');
+const WeeklyMark = require('../models/WeeklyMark');
+const PasswordResetRequest = require('../models/PasswordResetRequest');
 const { DEFAULT_STUDENT_PASSWORD } = require('../utils/constants');
 const { sendSuccess, sendError } = require('../utils/responseHandler');
 const {
@@ -180,9 +182,9 @@ const updateStudent = async (req, res, next) => {
 };
 
 /**
- * Deactivate or soft delete student
+ * Toggle student active status (Activate / Deactivate)
  */
-const deleteOrDeactivateStudent = async (req, res, next) => {
+const toggleStudentStatus = async (req, res, next) => {
   try {
     const student = await Student.findById(req.params.id);
     if (!student) {
@@ -198,6 +200,52 @@ const deleteOrDeactivateStudent = async (req, res, next) => {
       `Student ${student.isActive ? 'activated' : 'deactivated'} successfully`,
       { student }
     );
+  } catch (error) {
+    next(error);
+  }
+};
+
+const deleteOrDeactivateStudent = toggleStudentStatus;
+
+/**
+ * Permanently delete a student by ID and remove associated marks/requests
+ */
+const deleteStudent = async (req, res, next) => {
+  try {
+    const student = await Student.findById(req.params.id);
+    if (!student) {
+      return sendError(res, 404, 'Student not found');
+    }
+
+    await Promise.all([
+      WeeklyMark.deleteMany({ studentId: student._id }),
+      PasswordResetRequest.deleteMany({ studentId: student._id }),
+      Student.findByIdAndDelete(student._id)
+    ]);
+
+    return sendSuccess(res, 200, `Student '${student.name}' (${student.rollNo}) deleted successfully.`);
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
+ * Bulk delete multiple students by IDs
+ */
+const bulkDeleteStudents = async (req, res, next) => {
+  try {
+    const { studentIds } = req.body;
+    if (!studentIds || !Array.isArray(studentIds) || studentIds.length === 0) {
+      return sendError(res, 400, 'Please provide a non-empty array of student IDs to delete.');
+    }
+
+    await Promise.all([
+      WeeklyMark.deleteMany({ studentId: { $in: studentIds } }),
+      PasswordResetRequest.deleteMany({ studentId: { $in: studentIds } }),
+      Student.deleteMany({ _id: { $in: studentIds } })
+    ]);
+
+    return sendSuccess(res, 200, `Successfully deleted ${studentIds.length} student(s).`);
   } catch (error) {
     next(error);
   }
@@ -326,15 +374,74 @@ const confirmImport = async (req, res, next) => {
   }
 };
 
+/**
+ * Download sample CSV template file
+ */
+const downloadCSVTemplateFile = (req, res, next) => {
+  try {
+    const headers = 'RollNo,Name,Email,Phone,Department,Year,Class,House\n';
+    const sampleData = [
+      '23IT001,Arun Kumar,arun@email.com,9876543210,IT,II,A,Green House',
+      '23IT002,Bala Kumar,bala@email.com,9876543211,IT,II,A,Blue House',
+      '23CS003,Priya Sharma,priya@email.com,9876543212,CSE,III,B,Red House',
+      '23EC004,David Wilson,david@email.com,9876543213,ECE,I,A,Yellow House',
+      '23OB005,Sanjay Kumar,sanjay@email.com,9876543214,IT,IV,A,Office Bearers'
+    ].join('\n');
+
+    res.setHeader('Content-Type', 'text/csv; charset=utf-8');
+    res.setHeader('Content-Disposition', 'attachment; filename="ecoclub_students_template.csv"');
+    return res.status(200).send(headers + sampleData);
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
+ * Download sample Excel (.xlsx) template file
+ */
+const downloadExcelTemplateFile = (req, res, next) => {
+  try {
+    const xlsx = require('xlsx');
+    const sampleRows = [
+      { RollNo: '23IT001', Name: 'Arun Kumar', Email: 'arun@email.com', Phone: '9876543210', Department: 'IT', Year: 'II', Class: 'A', House: 'Green House' },
+      { RollNo: '23IT002', Name: 'Bala Kumar', Email: 'bala@email.com', Phone: '9876543211', Department: 'IT', Year: 'II', Class: 'A', House: 'Blue House' },
+      { RollNo: '23CS003', Name: 'Priya Sharma', Email: 'priya@email.com', Phone: '9876543212', Department: 'CSE', Year: 'III', Class: 'B', House: 'Red House' },
+      { RollNo: '23EC004', Name: 'David Wilson', Email: 'david@email.com', Phone: '9876543213', Department: 'ECE', Year: 'I', Class: 'A', House: 'Yellow House' },
+      { RollNo: '23OB005', Name: 'Sanjay Kumar', Email: 'sanjay@email.com', Phone: '9876543214', Department: 'IT', Year: 'IV', Class: 'A', House: 'Office Bearers' }
+    ];
+
+    const worksheet = xlsx.utils.json_to_sheet(sampleRows);
+    const workbook = xlsx.utils.book_new();
+    xlsx.utils.book_append_sheet(workbook, worksheet, 'Students');
+
+    worksheet['!cols'] = [
+      { wch: 12 }, { wch: 20 }, { wch: 25 }, { wch: 14 },
+      { wch: 14 }, { wch: 8 }, { wch: 8 }, { wch: 18 }
+    ];
+
+    const buffer = xlsx.write(workbook, { bookType: 'xlsx', type: 'buffer' });
+    res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+    res.setHeader('Content-Disposition', 'attachment; filename="ecoclub_students_template.xlsx"');
+    return res.status(200).send(buffer);
+  } catch (error) {
+    next(error);
+  }
+};
+
 module.exports = {
   getStudents,
   getStudentById,
   createStudent,
   updateStudent,
+  toggleStudentStatus,
   deleteOrDeactivateStudent,
+  deleteStudent,
+  bulkDeleteStudents,
   assignHouse,
   bulkAssignHouse,
   previewCSVImport,
   previewExcelImport,
-  confirmImport
+  confirmImport,
+  downloadCSVTemplateFile,
+  downloadExcelTemplateFile
 };

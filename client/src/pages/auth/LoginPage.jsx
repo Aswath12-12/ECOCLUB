@@ -189,25 +189,18 @@ export const LoginPage = () => {
             <p className="text-[11px] font-semibold text-slate-400 text-center mb-2 uppercase tracking-wider">
               Quick Dev Test Credentials
             </p>
-            <div className="grid grid-cols-3 gap-1.5">
-              <button
-                type="button"
-                onClick={fillDevAdmin}
-                className="p-1.5 text-[10px] font-semibold bg-slate-100 hover:bg-eco-100/60 hover:text-eco-800 rounded-lg text-slate-600 transition-colors"
-              >
-                Admin (Demo)
-              </button>
+            <div className="grid grid-cols-2 gap-2">
               <button
                 type="button"
                 onClick={fillDevStudentNew}
-                className="p-1.5 text-[10px] font-semibold bg-slate-100 hover:bg-eco-100/60 hover:text-eco-800 rounded-lg text-slate-600 transition-colors"
+                className="p-2 text-[11px] font-semibold bg-slate-100 hover:bg-eco-100/60 hover:text-eco-800 rounded-xl text-slate-600 transition-colors"
               >
                 New Student
               </button>
               <button
                 type="button"
                 onClick={fillDevStudentActive}
-                className="p-1.5 text-[10px] font-semibold bg-slate-100 hover:bg-eco-100/60 hover:text-eco-800 rounded-lg text-slate-600 transition-colors"
+                className="p-2 text-[11px] font-semibold bg-slate-100 hover:bg-eco-100/60 hover:text-eco-800 rounded-lg text-slate-600 transition-colors"
               >
                 Active Student
               </button>

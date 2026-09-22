@@ -9,6 +9,10 @@ router.use(authenticateJWT);
 router.get('/grading-sheet', authorizeRoles('ADMIN'), markController.getMarksForGrading);
 router.post('/', authorizeRoles('ADMIN'), markController.saveOrUpdateMarks);
 
+// House-level grading routes
+router.get('/house-grading-sheet', authorizeRoles('ADMIN'), markController.getHouseGradingSheet);
+router.post('/save-house-marks', authorizeRoles('ADMIN'), markController.saveHouseMarks);
+
 // Student views own marks
 router.get('/my-marks', authorizeRoles('STUDENT'), markController.getMyMarks);
 

@@ -245,9 +245,13 @@ npm run dev
 - `GET /api/students/:id` - Fetch student by ID.
 - `POST /api/students` - Create new student with default password `eocsxcce`.
 - `PUT /api/students/:id` - Update student profile.
-- `DELETE /api/students/:id` - Deactivate / activate student.
+- `PATCH /api/students/:id/status` - Toggle active / inactive student status.
+- `DELETE /api/students/:id` - Permanently delete student and associated marks/requests.
+- `POST /api/students/bulk-delete` - Permanently delete selected student IDs.
 - `PATCH /api/students/:id/house` - Assign or change student's house.
 - `POST /api/students/bulk-assign-house` - Assign house to array of student IDs.
+- `GET /api/students/import/template/csv` - Download sample CSV bulk import template (`ecoclub_students_template.csv`).
+- `GET /api/students/import/template/excel` - Download sample Excel bulk import template (`ecoclub_students_template.xlsx`).
 - `POST /api/students/import/csv` - Upload CSV, returns preview with row-level validation.
 - `POST /api/students/import/excel` - Upload Excel (.xlsx), returns preview with validation.
 - `POST /api/students/import/confirm` - Commit validated students into database.

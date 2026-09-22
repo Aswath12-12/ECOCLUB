@@ -34,7 +34,16 @@ export const StudentDashboard = () => {
         ]);
 
         if (mRes.success) setMarksData(mRes.data);
-        if (rRes.success) setHouseRankings(rRes.data.rankings);
+        if (rRes.success && rRes.data.rankings) {
+          const studentHouses = rRes.data.rankings
+            .filter((h) => h.code !== 'OFFICE_BEARERS')
+            .map((h, idx) => ({
+              ...h,
+              rank: idx + 1,
+              rankText: ['1st', '2nd', '3rd', '4th'][idx] || `${idx + 1}th`
+            }));
+          setHouseRankings(studentHouses);
+        }
       } catch (err) {
         setError(err.message || 'Failed to load your student dashboard');
       } finally {

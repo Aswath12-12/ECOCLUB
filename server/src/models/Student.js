@@ -74,9 +74,12 @@ const studentSchema = new mongoose.Schema(
   }
 );
 
-// Hash password before saving if modified
+// Hash password before saving if modified (prevent double hashing if already bcrypt hash)
 studentSchema.pre('save', async function (next) {
   if (!this.isModified('password')) return next();
+  if (/^\$2[ayb]\$.{56}$/.test(this.password)) {
+    return next();
+  }
   const salt = await bcrypt.genSalt(10);
   this.password = await bcrypt.hash(this.password, salt);
   next();

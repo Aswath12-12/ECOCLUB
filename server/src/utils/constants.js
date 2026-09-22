@@ -1,10 +1,13 @@
 const DEFAULT_STUDENT_PASSWORD = 'eocsxcce';
 
+const DEPARTMENTS = ['IT', 'CSE', 'ECE', 'MECH', 'CIVIL', 'EEE', 'AI&DS', 'BIOTECH', 'CYBER SECURITY'];
+
 const HOUSE_CODES = {
   GREEN: 'GREEN',
   BLUE: 'BLUE',
   RED: 'RED',
-  YELLOW: 'YELLOW'
+  YELLOW: 'YELLOW',
+  OFFICE_BEARERS: 'OFFICE_BEARERS'
 };
 
 const INITIAL_HOUSES = [
@@ -35,6 +38,13 @@ const INITIAL_HOUSES = [
     description: 'Leaders in solar awareness, sustainable living, and zero-waste initiatives.',
     colorCode: '#F59E0B',
     active: true
+  },
+  {
+    name: 'Office Bearers',
+    code: 'OFFICE_BEARERS',
+    description: 'Core leadership team, student office bearers, executive council, and EcoClub coordinators.',
+    colorCode: '#8B5CF6',
+    active: true
   }
 ];
 
@@ -51,6 +61,7 @@ const RESET_STATUS = {
 
 module.exports = {
   DEFAULT_STUDENT_PASSWORD,
+  DEPARTMENTS,
   HOUSE_CODES,
   INITIAL_HOUSES,
   ROLES,

@@ -5,7 +5,7 @@ const weeklyMarkSchema = new mongoose.Schema(
     studentId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'Student',
-      required: [true, 'Student reference is required']
+      required: false
     },
     houseId: {
       type: mongoose.Schema.Types.ObjectId,
@@ -54,7 +54,14 @@ const weeklyMarkSchema = new mongoose.Schema(
 );
 
 // Prevent duplicate mark records for: student + activity + week
-weeklyMarkSchema.index({ studentId: 1, activityId: 1, weekNumber: 1 }, { unique: true });
+weeklyMarkSchema.index(
+  { studentId: 1, activityId: 1, weekNumber: 1 },
+  { unique: true, partialFilterExpression: { studentId: { $type: 'objectId' } } }
+);
+weeklyMarkSchema.index(
+  { houseId: 1, activityId: 1, weekNumber: 1, studentId: 1 },
+  { unique: true }
+);
 weeklyMarkSchema.index({ houseId: 1, weekNumber: 1 });
 
 module.exports = mongoose.model('WeeklyMark', weeklyMarkSchema);

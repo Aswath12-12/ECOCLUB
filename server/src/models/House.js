@@ -12,7 +12,7 @@ const houseSchema = new mongoose.Schema(
       required: [true, 'House code is required'],
       unique: true,
       uppercase: true,
-      enum: ['GREEN', 'BLUE', 'RED', 'YELLOW']
+      enum: ['GREEN', 'BLUE', 'RED', 'YELLOW', 'OFFICE_BEARERS']
     },
     description: {
       type: String,
@@ -32,12 +32,12 @@ const houseSchema = new mongoose.Schema(
   }
 );
 
-// Prevent creating more than 4 houses
+// Pre-save validation limit
 houseSchema.pre('save', async function (next) {
   if (this.isNew) {
     const count = await mongoose.model('House').countDocuments();
-    if (count >= 4) {
-      return next(new Error('System allows exactly 4 houses (GREEN, BLUE, RED, YELLOW). You cannot add more houses.'));
+    if (count >= 10) {
+      return next(new Error('Maximum house count limit reached.'));
     }
   }
   next();

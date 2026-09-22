@@ -4,16 +4,22 @@ const studentController = require('../controllers/studentController');
 const { authenticateJWT, authorizeRoles } = require('../middleware/authMiddleware');
 const upload = require('../middleware/uploadMiddleware');
 
-// All routes require authentication
+// Public sample template downloads (native browser downloads with Content-Disposition)
+router.get('/import/template/csv', studentController.downloadCSVTemplateFile);
+router.get('/import/template/excel', studentController.downloadExcelTemplateFile);
+
+// All subsequent routes require authentication
 router.use(authenticateJWT);
 
 // Admin-only endpoints
 router.get('/', authorizeRoles('ADMIN'), studentController.getStudents);
 router.post('/', authorizeRoles('ADMIN'), studentController.createStudent);
 router.put('/:id', authorizeRoles('ADMIN'), studentController.updateStudent);
-router.delete('/:id', authorizeRoles('ADMIN'), studentController.deleteOrDeactivateStudent);
+router.patch('/:id/status', authorizeRoles('ADMIN'), studentController.toggleStudentStatus);
+router.delete('/:id', authorizeRoles('ADMIN'), studentController.deleteStudent);
 router.patch('/:id/house', authorizeRoles('ADMIN'), studentController.assignHouse);
 router.post('/bulk-assign-house', authorizeRoles('ADMIN'), studentController.bulkAssignHouse);
+router.post('/bulk-delete', authorizeRoles('ADMIN'), studentController.bulkDeleteStudents);
 
 // CSV & Excel bulk imports
 router.post('/import/csv', authorizeRoles('ADMIN'), upload.single('file'), studentController.previewCSVImport);

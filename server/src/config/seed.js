@@ -19,8 +19,8 @@ const seedData = async () => {
     console.log('[Seed] Purging existing database and collections...');
     await mongoose.connection.dropDatabase();
 
-    // 1. Seed 4 Houses
-    console.log('[Seed] Seeding 4 Houses (GREEN, BLUE, RED, YELLOW)...');
+    // 1. Seed 5 Houses
+    console.log('[Seed] Seeding 5 Houses (GREEN, BLUE, RED, YELLOW, OFFICE_BEARERS)...');
     const houses = await House.insertMany(INITIAL_HOUSES);
     const houseMap = {};
     houses.forEach((h) => {
@@ -32,7 +32,7 @@ const seedData = async () => {
     const adminUser = await User.create({
       name: 'EcoClub Administrator',
       email: 'admin@ecoclub.org',
-      password: 'Admin@123',
+      password: 'admineco26',
       role: 'ADMIN',
       isActive: true
     });
@@ -269,6 +269,48 @@ const seedData = async () => {
         year: 'I',
         className: 'A',
         houseId: houseMap.YELLOW._id
+      },
+
+      // OFFICE BEARERS HOUSE
+      {
+        rollNo: '23OB001',
+        name: 'Sanjay Kumar (President)',
+        email: 'sanjay.president@ecoclub.org',
+        phone: '9876543250',
+        department: 'IT',
+        year: 'IV',
+        className: 'A',
+        houseId: houseMap.OFFICE_BEARERS._id
+      },
+      {
+        rollNo: '23OB002',
+        name: 'Ananya Sharma (Secretary)',
+        email: 'ananya.secretary@ecoclub.org',
+        phone: '9876543251',
+        department: 'CSE',
+        year: 'IV',
+        className: 'B',
+        houseId: houseMap.OFFICE_BEARERS._id
+      },
+      {
+        rollNo: '23OB003',
+        name: 'Vikas Reddy (Treasurer)',
+        email: 'vikas.treasurer@ecoclub.org',
+        phone: '9876543252',
+        department: 'ECE',
+        year: 'III',
+        className: 'A',
+        houseId: houseMap.OFFICE_BEARERS._id
+      },
+      {
+        rollNo: '23OB004',
+        name: 'Pooja Hegde (Vice President)',
+        email: 'pooja.vp@ecoclub.org',
+        phone: '9876543253',
+        department: 'MECH',
+        year: 'III',
+        className: 'B',
+        houseId: houseMap.OFFICE_BEARERS._id
       }
     ];
 
@@ -412,7 +454,7 @@ const seedData = async () => {
     console.log('DEVELOPMENT ONLY CREDENTIALS:');
     console.log('Admin Login:');
     console.log('  Email:    admin@ecoclub.org');
-    console.log('  Password: Admin@123');
+    console.log('  Password: admineco26');
     console.log('');
     console.log('Student Test 1 (First Login with Default Password):');
     console.log('  Roll No:  23IT001');
